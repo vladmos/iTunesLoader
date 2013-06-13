@@ -138,7 +138,7 @@ def process_dir(files, only_add, delete, ignore_cue):
             if extract_extension(f) == 'flac':
                 file_info = flac.FLAC(f)
             elif extract_extension(f) == 'mp3':
-                file_info = flac.MP3(f)
+                file_info = mp3.MP3(f)
 
             if file_info:
                 artist, album = file_info.tags.get('ARTIST'), file_info.tags.get('ALBUM')
