@@ -16,6 +16,12 @@ or [homebrew](http://mxcl.github.com/homebrew/).
 If you want to attach coverarts automatically, `atomicparsley` is required, which is also available with
 [homebrew](http://mxcl.github.com/homebrew/).
 
+
+Python dependences
+------------------
+
+  * `mutagen` -- library for reading audio file tags
+
 Usage
 -----
 
