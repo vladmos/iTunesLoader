@@ -5,12 +5,11 @@ import os
 import string
 import optparse
 
-from mutagen.flac import FLAC
-from mutagen.mp3 import MP3
+from mutagen import flac, mp3, mp4
 
 import cue_parser
 from util import run, remove_file
-from lastfm import get_cover_art
+from lastfm import get_album_data
 
 LOCATION = os.path.dirname(os.path.realpath(__file__))
 ADD_SONG = os.path.join(LOCATION, "upload_file_to_itunes.applescript")
@@ -18,6 +17,7 @@ SET_TAG = os.path.join(LOCATION, "set_tags_to_last_song.applescript")
 
 AUDIO_EXT = ["flac", "m4a", "mp3", "ape", "wav", "aiff"]
 PLAYLIST_EXT = ["cue", "pls", "m3u"]
+
 
 class Cue(object):
     # TODO: exclude using of audiotools
@@ -48,6 +48,7 @@ class Cue(object):
     def track_index(self, name):
         return self.find_track(name)[0]
 
+
 class Enter(object):
     def __init__(self, old_path, new_path):
         self.old_path = os.path.abspath(old_path)
@@ -60,9 +61,11 @@ class Enter(object):
     def __exit__(self, type, value, traceback):
         os.chdir(self.old_path)
 
+
 def extract_extension(name):
     basename, extension = os.path.splitext(name)
     return extension[1:].lower()
+
 
 def walk_audiofiles(top):
     extensions = AUDIO_EXT + PLAYLIST_EXT
@@ -70,7 +73,8 @@ def walk_audiofiles(top):
         audio_files = [f for f in files if extract_extension(f) in extensions]
         yield os.path.abspath(root), audio_files
 
-def process_dir(files, only_add, delete, ignore_cue, add_artwork):
+
+def process_dir(files, only_add, delete, ignore_cue):
     def add_file_to_itunes(filename, cue=None):
         filename = os.path.abspath(filename)
         print "Adding file %s to iTunes" % filename
@@ -100,6 +104,7 @@ def process_dir(files, only_add, delete, ignore_cue, add_artwork):
 
     cue = None
     files_to_add = []
+    temp_files = []
     if "cue" in playlist_ext and not ignore_cue:
         if playlist_ext.count("cue") > 1:
             print "Error: more than one cue files, ignoring this path."
@@ -129,28 +134,37 @@ def process_dir(files, only_add, delete, ignore_cue, add_artwork):
             target_file = basename + ".m4a"
             run("ffmpeg -i \"%s\" -acodec alac \"%s\"" % (f, target_file))
 
-            if add_artwork:
-                file_info = None
-                if extract_extension(f) == 'flac':
-                    file_info = FLAC(f)
-                elif extract_extension(f) == 'mp3':
-                    file_info = MP3(f)
+            file_info = None
+            if extract_extension(f) == 'flac':
+                file_info = flac.FLAC(f)
+            elif extract_extension(f) == 'mp3':
+                file_info = flac.MP3(f)
 
-                if file_info:
-                    artist, album = file_info.tags.get('ARTIST'), file_info.tags.get('ALBUM')
+            if file_info:
+                artist, album = file_info.tags.get('ARTIST'), file_info.tags.get('ALBUM')
 
-                    if artist and album:
-                        artwork_file = get_cover_art(artist[0], album[0])
+                if artist and album:
+                    year, artwork_file = get_album_data(artist[0], album[0])
+                    if year:
+                        target_file_info = mp4.MP4(target_file)
+                        target_file_info['\xa9day'] = year
+                        target_file_info.save()
+                    if artwork_file:
                         run("AtomicParsley \"%s\" --artwork \"%s\" --overWrite" % (target_file, artwork_file))
 
+
             files_to_add.append(target_file)
+            temp_files.append(target_file)
             if delete:
                 remove_file(f)
 
-    for f in files_to_add:
-        add_file_to_itunes(f, cue)
+    for filename in files_to_add:
+        add_file_to_itunes(filename, cue)
+    for filename in temp_files:
+        remove_file(filename)
     #if delete and cue is not None:
     #    remove_file(cue.filename)
+
 
 if __name__ == "__main__":
     parser = optparse.OptionParser(
@@ -166,9 +180,6 @@ if __name__ == "__main__":
     parser.add_option("--ignore-cue, -i", dest="ignore_cue",
                       action="store_true", default=False,
                       help="Ignore all cue files.")
-    parser.add_option("--add-artwork, -i", dest="add_artwork",
-                      action="store_true", default=False,
-                      help="Download and attach artwork files.")
     (options, args) = parser.parse_args()
 
     if len(args) != 1:
@@ -181,4 +192,4 @@ if __name__ == "__main__":
             if not files:
                 print "Directory doesn't contain supported formats."
                 continue
-            process_dir(files, options.only_add, options.delete, options.ignore_cue, options.add_artwork)
+            process_dir(files, options.only_add, options.delete, options.ignore_cue)

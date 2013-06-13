@@ -1,5 +1,6 @@
 import urllib
 import tempfile
+import re
 try:
     from json import loads as json_loads
 except ImportError:
@@ -8,29 +9,48 @@ except ImportError:
 from config import LASTFM_API_KEY as API_KEY
 
 API_URL = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&format=json&%s'
+YEAR_REGEX = re.compile(r'^.*[^\d]([\d]{4})[^\d].*$')
 
 
-class TempStorage(object):
+class DataStorage(object):
     def __init__(self):
         self._storage = {}
-
-    def __getitem__(self, item):
-        return self._storage[item]
-
-    def __setitem__(self, key, value):
-        handle, file_name = tempfile.mkstemp()
-        with open(file_name, 'w') as f:
-            f.write(value)
-        self._storage[key] = file_name
 
     def __contains__(self, item):
         return item in self._storage
 
-cover_art_storage = TempStorage()
+    def get(self, artist, album):
+        return self._storage[artist, album]
+
+    def store(self, artist, album, year, image):
+        image_file_name = None
+        if image:
+            handle, image_file_name = tempfile.mkstemp()
+            with open(image_file_name, 'w') as f:
+                f.write(image)
+        self._storage[artist, album] = (year, image_file_name)
 
 
-def get_cover_art(artist, album):
-    if (artist, album) not in cover_art_storage:
+data_storage = DataStorage()
+
+
+def _get_release_year(data):
+    year = data['album']['releasedate']
+    year_match = YEAR_REGEX.match(year)
+    if year_match:
+        return year_match.group(1)
+
+
+def _get_coverart_url(data):
+    images = data['album'].get('image', [])
+
+    for image in images:
+        if image['size'] == 'large':
+            return image['#text']
+
+
+def get_album_data(artist, album):
+    if (artist, album) not in data_storage:
 
         url = API_URL % urllib.urlencode({
             'api_key': API_KEY,
@@ -42,16 +62,14 @@ def get_cover_art(artist, album):
         json = request.read()
         data = json_loads(json)
 
-        images = data['album'].get('image', [])
+        year = _get_release_year(data)
+        image_url = _get_coverart_url(data)
 
-        for image in images:
-            if image['size'] == 'large':
-                image_url = image['#text']
-                break
-        else:
-            return
+        image = None
+        if image_url:
+            image_request = urllib.urlopen(image_url)
+            image = image_request.read()
 
-        image_request = urllib.urlopen(image_url)
-        cover_art_storage[artist, album] = image_request.read()
+        data_storage.store(artist, album, year, image)
 
-    return cover_art_storage[artist, album]
+    return data_storage.get(artist, album)
