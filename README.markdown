@@ -31,4 +31,4 @@ Upload [iTunesLoader]() and run loader.py. It has one required argument — the 
 License
 -------
 
-Copyright (c) Ignatiy Kolesnichenko. Distribution is free.
+Copyright (c) Ignatiy Kolesnichenko and Vladimir Moskva. Distribution is free.
