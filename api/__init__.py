@@ -2,6 +2,7 @@ from .lastfm import get_album_coverart
 from .discogs import get_album_data
 from .utils import CaseInsensitiveDict
 
+
 class Album(object):
     def __init__(self, year, cover_art_file_name, track_list):
         self.year = year
