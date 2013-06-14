@@ -9,7 +9,7 @@ from mutagen import flac, mp3, mp4
 
 import cue_parser
 from util import run, remove_file
-from lastfm import get_album_data
+from api import TrackInfo
 
 LOCATION = os.path.dirname(os.path.realpath(__file__))
 ADD_SONG = os.path.join(LOCATION, "upload_file_to_itunes.applescript")
@@ -132,17 +132,26 @@ def process_dir(files, only_add, delete, ignore_cue):
                 file_info = mp3.MP3(f)
 
             if file_info:
-                artist, album = file_info.tags.get('ARTIST'), file_info.tags.get('ALBUM')
+                track_name = file_info.tags.get('ARTIST'), file_info.tags.get('ALBUM'), file_info.tags.get('TITLE')
 
-                if artist and album:
-                    year, artwork_file = get_album_data(artist[0], album[0])
-                    if year:
-                        target_file_info = mp4.MP4(target_file)
-                        target_file_info['\xa9day'] = year
-                        target_file_info.save()
-                    if artwork_file:
-                        run('AtomicParsley', target_file, '--artwork', artwork_file)
+                if all(track_name):
+                    track_name = tuple(n[0] for n in track_name)
+                    track_info = TrackInfo(*track_name)
 
+                    target_file_info = mp4.MP4(target_file)
+                    if track_info.year:
+                        target_file_info['\xa9day'] = str(track_info.year)
+                    if track_info.track_index:
+                        target_file_info['trkn'] = [(track_info.track_index, track_info.cd_track_count or 0)]
+                    if track_info.cd_index:
+                        target_file_info['disk'] = [(track_info.cd_index, track_info.cd_count or 0)]
+                    if track_info.track_name:
+                        target_file_info['\xa9nam'] = track_info.track_name
+
+                    target_file_info.save()
+
+                    if track_info.cover_art_file_name:
+                        run('AtomicParsley', target_file, '--artwork', track_info.cover_art_file_name, '--overWrite')
 
             files_to_add.append(target_file)
             temp_files.append(target_file)

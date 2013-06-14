@@ -22,7 +22,9 @@ The following dependences are available at [homebrew](http://mxcl.github.com/hom
 Python dependences
 ------------------
 
+  * `requests`
   * `mutagen` — library for reading audio file tags
+  * `discogs_client` — accessing the Discogs database API
 
 Usage
 -----
