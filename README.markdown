@@ -10,17 +10,19 @@ First you need to upload command line version of X Lossless Decoder.
 You can find it [here](http://tmkk.pv.land.to/xld/index_e.html).
 Don't forget to add it to your PATH variable.
 
-Also you neeg `ffmpeg` and `cuetools`. You can download it with [mac ports](http://guide.macports.org/)
-or [homebrew](http://mxcl.github.com/homebrew/).
 
-If you want to attach coverarts automatically, `atomicparsley` is required, which is also available with
-[homebrew](http://mxcl.github.com/homebrew/).
+The following dependences are available at [homebrew](http://mxcl.github.com/homebrew/) or
+[mac ports](http://guide.macports.org/):
+
+  * `ffmpeg`
+  * `cuetools`
+  * `atomicparsley` — for attaching coverarts to the audiofiles (albums look more neat in iTunes!)
 
 
 Python dependences
 ------------------
 
-  * `mutagen` -- library for reading audio file tags
+  * `mutagen` — library for reading audio file tags
 
 Usage
 -----
