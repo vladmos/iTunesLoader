@@ -25,7 +25,7 @@ class DataStorage(object):
     def store(self, artist, album, year, image):
         image_file_name = None
         if image:
-            handle, image_file_name = tempfile.mkstemp()
+            handle, image_file_name = tempfile.mkstemp(suffix='.jpg')
             with open(image_file_name, 'w') as f:
                 f.write(image)
         self._storage[artist, album] = (year, image_file_name)
