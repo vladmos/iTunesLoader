@@ -78,20 +78,11 @@ def process_dir(files, only_add, delete, ignore_cue):
     def add_file_to_itunes(filename, cue=None):
         filename = os.path.abspath(filename)
         print "Adding file %s to iTunes" % filename
-        run("osascript %s '%s'" % (ADD_SONG, filename))
+        run('osascript', ADD_SONG, filename)
         if cue is not None:
             name = os.path.splitext(os.path.basename(filename))[0]
-            run('osascript %(bin)s '
-                '"%(track)s" "%(artist)s" "%(album)s" "%(genre)s" "%(name)s" "%(track_count)d" "%(track_index)d" "%(year)s"' %
-                {"bin": SET_TAG,
-                 "track": name,
-                 "artist": cue.artist,
-                 "album": cue.album,
-                 "genre": getattr(cue, "genre", ""),
-                 "name": cue.getname(name),
-                 "track_count": cue.track_count,
-                 "track_index": cue.track_index(name),
-                 "year": cue.year})
+            run('osascript', SET_TAG, name, cue.artist, cue.album, getattr(cue, 'genre'), cue.getname(name),
+                cue.track_count, cue.track_index(name), cue.year)
 
     extensions = [extract_extension(f) for f in files]
     audio_files = filter(lambda f: extract_extension(f) in AUDIO_EXT, files)
@@ -132,7 +123,7 @@ def process_dir(files, only_add, delete, ignore_cue):
         elif not only_add:
             basename, _ = os.path.splitext(f)
             target_file = basename + ".m4a"
-            run("ffmpeg -i \"%s\" -acodec alac \"%s\"" % (f, target_file))
+            run('ffmpeg', '-i', f, '-acodec alac', target_file)
 
             file_info = None
             if extract_extension(f) == 'flac':
@@ -150,7 +141,7 @@ def process_dir(files, only_add, delete, ignore_cue):
                         target_file_info['\xa9day'] = year
                         target_file_info.save()
                     if artwork_file:
-                        run("AtomicParsley \"%s\" --artwork \"%s\" --overWrite" % (target_file, artwork_file))
+                        run('AtomicParsley', target_file, '--artwork', artwork_file)
 
 
             files_to_add.append(target_file)
