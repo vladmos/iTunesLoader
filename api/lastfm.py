@@ -16,7 +16,7 @@ def _get_coverart(data):
     images = data['album'].get('image', [])
 
     for image in images:
-        if image['size'] == 'large':
+        if image['size'] == 'extralarge':
             image_url = image['#text']
             suffix = image_url.split('.')[-1].lower()
             image = requests.get(image_url).content
