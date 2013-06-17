@@ -4,6 +4,7 @@ from itertools import chain, imap
 
 
 def _escape_parameter(parameter):
+    parameter = str(parameter)
     if parameter.startswith('-'):
         return parameter
     return '"%s"' % parameter.replace('\\', '\\\\').replace('"', '\\"')
