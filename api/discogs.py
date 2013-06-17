@@ -58,8 +58,9 @@ def get_album_data(artist_name, album_name):
             releases = list(artist_data.releases)
             print 'Found %s releases for %s' % (len(releases), artist_data.name)
             for release in releases:
-                print 'Fetching album %s - %s' % (artist_data.name, album_name)
+                print 'Fetching album %s - %s' % (artist_data.name, release.title)
                 ARTISTS[artist_name][release.title] = release
+            print 'Done with the artist %s' % artist_data.name
 
     release = ARTISTS[artist_name].get_closest(album_name)
     if release:
