@@ -29,43 +29,29 @@ class CaseInsensitiveDict(dict):
         return super(CaseInsensitiveDict, self).get(simplify(k), d)
 
     def get_closest(self, key):
+        if key in self:
+            return self[key]
         key = simplify(key)
-        distance, closest_key = max((len(lcs(key, k)), k) for k in self.iterkeys())
-        return self[closest_key]
+        substring_length, closest_key = max((len(longest_common_substring(key, k)), k) for k in self.iterkeys())
+        if substring_length > min(len(closest_key), len(key)) / 2:
+            return self[closest_key]
 
 
-def lcs(x, y):
+def longest_common_substring(s1, s2):
     """
-    Longest common subsequence.
+    Longest common substring (not to be confused with subsequence).
     Used as an euristics in comparing track names from the file tags to ones from the online database.
     Track names might be slightly different, for example, missing alternative name or an apostrophe.
     """
-    n = len(x)
-    m = len(y)
-    table = dict()  # a hashtable, but we'll use it as a 2D array here
-
-    for i in range(n + 1):      # i = 0,1,...,n
-        for j in range(m + 1):  # j = 0,1,...,m
-            if i == 0 or j == 0:
-                table[i, j] = 0
-            elif x[i-1] == y[j-1]:
-                table[i, j] = table[i-1, j-1] + 1
+    m = [[0] * (1 + len(s2)) for i in xrange(1 + len(s1))]
+    longest, x_longest = 0, 0
+    for x in xrange(1, 1 + len(s1)):
+        for y in xrange(1, 1 + len(s2)):
+            if s1[x - 1] == s2[y - 1]:
+                m[x][y] = m[x - 1][y - 1] + 1
+                if m[x][y] > longest:
+                    longest = m[x][y]
+                    x_longest = x
             else:
-                table[i, j] = max(table[i-1, j], table[i, j-1])
-
-    # Now, table[n, m] is the length of LCS of x and y.
-
-    # Let's go one step further and reconstruct
-    # the actual sequence from DP table:
-
-    def recon(i, j):
-        if i == 0 or j == 0:
-            return []
-        elif x[i-1] == y[j-1]:
-            return recon(i-1, j-1) + [x[i-1]]
-        elif table[i-1, j] > table[i, j-1]:
-            return recon(i-1, j)
-        else:
-            return recon(i, j-1)
-
-    return recon(n, m)
+                m[x][y] = 0
+    return s1[x_longest - longest:x_longest]

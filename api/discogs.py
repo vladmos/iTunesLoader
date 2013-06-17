@@ -29,7 +29,6 @@ class TrackList(object):
 
         for i, track in enumerate(tracklist):
             position = track['position']
-            print 'position', position, track['title']
             if '-' in position:
                 cd_index, track_index = tuple(map(int, position.split('-')))
             elif position and position.isdigit():
@@ -42,11 +41,7 @@ class TrackList(object):
             self._tracks[track['title']] = Track(track['title'], track_index, cd_index)
 
     def get_track(self, track_name):
-        try:
-            return self._tracks[track_name]
-        except KeyError:
-            # Failed to find the exact track name, let's try to find the closest one
-            return self._tracks.get_closest(track_name)
+        return self._tracks.get_closest(track_name) or Track(None, None, None)
 
     def get_cd_track_count(self, cd_index):
         return self._tracks_count.get(cd_index, None)
@@ -54,15 +49,16 @@ class TrackList(object):
 
 def get_album_data(artist_name, album_name):
     if artist_name not in ARTISTS:
-        ARTISTS[artist_name] = []
+        ARTISTS[artist_name] = CaseInsensitiveDict()
         search_data = discogs_client.Search(artist_name)
         for artist_data in search_data.exactresults:
-            ARTISTS[artist_name].extend(artist_data.releases)
+            for release in artist_data.releases:
+                ARTISTS[artist_name][release.title] = release
 
-    for release in ARTISTS[artist_name]:
-        if _equal_name(release.title, album_name):
-            year = release.data['year']
-            track_list = TrackList(release.data['tracklist'])
-            return year, track_list
+    release = ARTISTS[artist_name].get_closest(album_name)
+    if release:
+        year = release.data['year']
+        track_list = TrackList(release.data['tracklist'])
+        return year, track_list
 
     return None, TrackList([])
