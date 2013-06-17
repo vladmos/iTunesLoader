@@ -50,9 +50,15 @@ class TrackList(object):
 def get_album_data(artist_name, album_name):
     if artist_name not in ARTISTS:
         ARTISTS[artist_name] = CaseInsensitiveDict()
+        print 'Fetching info about %s' % artist_name
         search_data = discogs_client.Search(artist_name)
-        for artist_data in search_data.exactresults:
-            for release in artist_data.releases:
+        search_results = list(search_data.exactresults)
+        print 'Found %s candidates' % len(search_results)
+        for artist_data in search_results:
+            releases = list(artist_data.releases)
+            print 'Found %s releases for %s' % (len(releases), artist_data.name)
+            for release in releases:
+                print 'Fetching album %s - %s' % (artist_data.name, album_name)
                 ARTISTS[artist_name][release.title] = release
 
     release = ARTISTS[artist_name].get_closest(album_name)
