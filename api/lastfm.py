@@ -26,8 +26,8 @@ def _get_coverart(data):
 def get_album_coverart(artist, album):
     url = API_URL % urllib.urlencode({
         'api_key': API_KEY,
-        'artist': artist,
-        'album': album,
+        'artist': artist.encode('utf-8'),
+        'album': album.encode('utf-8'),
     })
 
     data = requests.get(url).json()
