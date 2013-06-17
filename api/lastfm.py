@@ -18,8 +18,9 @@ def _get_coverart(data):
     for image in images:
         if image['size'] == 'large':
             image_url = image['#text']
+            suffix = image_url.split('.')[-1].lower()
             image = requests.get(image_url).content
-            return image
+            return image, suffix
 
 
 def get_album_coverart(artist, album):
@@ -31,9 +32,9 @@ def get_album_coverart(artist, album):
 
     data = requests.get(url).json()
 
-    image = _get_coverart(data)
+    image, suffix = _get_coverart(data)
     if image:
-        handle, image_file_name = tempfile.mkstemp(suffix='.jpg')
+        handle, image_file_name = tempfile.mkstemp(suffix='.%s' % suffix)
         with open(image_file_name, 'w') as f:
             f.write(image)
         return image_file_name
