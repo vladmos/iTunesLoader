@@ -1,4 +1,5 @@
 import discogs_client
+from requests.exceptions import ConnectionError
 
 from .utils import CaseInsensitiveDict, simplify
 
@@ -28,13 +29,15 @@ class TrackList(object):
         self._tracks_count = {}
 
         for i, track in enumerate(tracklist):
+            cd_index, track_index = 1, i + 1
             position = track['position']
             if '-' in position:
-                cd_index, track_index = tuple(map(int, position.split('-')))
+                try:
+                    cd_index, track_index = tuple(map(int, position.split('-')))
+                except ValueError:
+                    pass
             elif position and position.isdigit():
                 cd_index, track_index = 1, int(position)
-            else:
-                cd_index, track_index = 1, i + 1
 
             self.cd_count = max(cd_index, self.cd_count)
             self._tracks_count[cd_index] = max(track_index, self._tracks_count.get(cd_index, 0))
@@ -52,14 +55,24 @@ def get_album_data(artist_name, album_name):
         ARTISTS[artist_name] = CaseInsensitiveDict()
         print 'Fetching info about %s' % artist_name
         search_data = discogs_client.Search(artist_name)
-        search_results = list(search_data.exactresults)
+        try:
+            search_results = list(search_data.exactresults)
+        except (KeyError, ConnectionError):  # discogs_client crashes sometimes
+            print 'Discogs client has crashed'
+            return None, TrackList([])
         print 'Found %s candidates' % len(search_results)
         for artist_data in search_results:
-            releases = list(artist_data.releases)
-            print 'Found %s releases for %s' % (len(releases), artist_data.name)
-            for release in releases:
-                print 'Fetching album %s - %s' % (artist_data.name, release.title)
-                ARTISTS[artist_name][release.title] = release
+            try:
+                releases = list(artist_data.releases)
+                print 'Found %s releases for %s' % (len(releases), artist_data.name)
+                for release in releases:
+                    try:
+                        print 'Fetching album %s - %s' % (artist_data.name, release.title)
+                        ARTISTS[artist_name][release.title] = release
+                    except (ConnectionError, ValueError):
+                        print 'Discogs client has crashed'
+            except ConnectionError:
+                print 'Discogs client has crashed'
             print 'Done with the artist %s' % artist_data.name
 
     release = ARTISTS[artist_name].get_closest(album_name)

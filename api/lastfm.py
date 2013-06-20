@@ -1,9 +1,5 @@
 import urllib
 import tempfile
-try:
-    from json import loads as json_loads
-except ImportError:
-    from simplejson import loads as json_loads
 
 import requests
 

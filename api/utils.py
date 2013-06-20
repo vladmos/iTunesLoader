@@ -31,6 +31,8 @@ class CaseInsensitiveDict(dict):
     def get_closest(self, key):
         if key in self:
             return self[key]
+        if not self:
+            return
         key = simplify(key)
         substring_length, closest_key = max((len(longest_common_substring(key, k)), k) for k in self.iterkeys())
         if substring_length > min(len(closest_key), len(key)) / 2:
