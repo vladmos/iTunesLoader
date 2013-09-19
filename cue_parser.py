@@ -85,7 +85,7 @@ def _parse_stream(cue_stream):
 
 def parse(filename):
     def detect_charset(filename):
-        stdout = run("file -I '%s'" % filename, return_stdout=True)
+        stdout = run('file', '-I', filename, return_stdout=True)
         line = stdout.split("\n")[0]
         index = line.find("charset")
         if index == -1:

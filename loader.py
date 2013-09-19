@@ -112,7 +112,7 @@ def process_dir(files, only_add, delete, ignore_cue):
                 print "Error: wrong extension %s. It is not supported with cue. "\
                       "Ignoring this path."
                 return
-            run("xld -c \"%s\" -f wav \"%s\"" % (cue.filename, audio_files[0]))
+            run('xld', '-c', cue.filename, '-f wav', audio_files[0])
             if delete:
                 remove_file(audio_files[0])
             audio_files = [f for f in os.listdir(".") if extract_extension(f) == "wav"]
