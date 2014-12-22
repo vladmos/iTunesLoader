@@ -14,6 +14,8 @@ def _get_coverart(data):
     for image in images:
         if image['size'] == 'extralarge':
             image_url = image['#text']
+            if not image_url:
+                return None, None
             suffix = image_url.split('.')[-1].lower()
             image = requests.get(image_url).content
             return image, suffix

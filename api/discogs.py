@@ -57,7 +57,7 @@ def get_album_data(artist_name, album_name):
         search_data = discogs_client.Search(artist_name)
         try:
             search_results = list(search_data.exactresults)
-        except (KeyError, ConnectionError):  # discogs_client crashes sometimes
+        except (KeyError, ValueError, ConnectionError, discogs_client.DiscogsAPIError):  # discogs_client crashes sometimes
             print 'Discogs client has crashed'
             return None, TrackList([])
         print 'Found %s candidates' % len(search_results)
